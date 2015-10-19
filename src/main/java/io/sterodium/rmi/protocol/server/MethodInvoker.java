@@ -128,7 +128,8 @@ class MethodInvoker {
         } catch (IllegalArgumentException e) {
             throw new RuntimeException(String.format("Method %s.%s call is illegal", target.getClass().getName(), method.getName()));
         } catch (InvocationTargetException e) {
-            String errorMessage = String.format("Method %s.%s threw exception", target.getClass().getName(), method.getName());
+            String errorMessage = String.format("Method %s.%s threw exception: %s",
+                    target.getClass().getName(), method.getName(), e.getCause());
             LOGGER.log(Level.WARNING, errorMessage, e);
             throw new RuntimeException(errorMessage, e);
         }

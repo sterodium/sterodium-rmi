@@ -60,7 +60,7 @@ class RemoteObjectMethodInterceptor implements MethodInterceptor {
 
             String responseValue = methodResponse.getValue();
             return responseValue == null ? null : convertToType(responseValue, method.getReturnType(), methodResponse.getType());
-        } catch (Exception e) {
+        } catch (ClassNotFoundException e) {
             LOGGER.error("Unmapped response", e);
         }
         return null;

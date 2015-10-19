@@ -1,7 +1,7 @@
 package io.sterodium.rmi.protocol.client;
 
-import io.sterodium.rmi.protocol.MethodInvocationResultDto;
 import com.google.common.primitives.Primitives;
+import io.sterodium.rmi.protocol.MethodInvocationResultDto;
 import net.sf.cglib.proxy.MethodProxy;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -20,7 +20,6 @@ import static org.hamcrest.core.Is.is;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -66,19 +65,16 @@ public class RemoteObjectMethodInterceptorTest {
         verify(methodProxy, times(1)).invokeSuper(any(), any(Object[].class));
     }
 
-    @Test
-    public void shouldReturnNullWhenExceptionHappenInInvoker() throws Throwable {
+    @Test(expected = RuntimeException.class)
+    public void shouldPropagateExceptionThatHappenInInvoker() throws Throwable {
         //noinspection unchecked
-        when(remoteInvoker.invoke(anyString(), any(Method.class), any(Object[].class))).thenThrow(Exception.class);
+        when(remoteInvoker.invoke(anyString(), any(Method.class), any(Object[].class))).thenThrow(RuntimeException.class);
         methodInterceptor = new RemoteObjectMethodInterceptor(null, remoteInvoker, null);
 
         ForThisTest mock = mock(ForThisTest.class);
         Method method = mock.getClass().getMethod("getVoidMethod");
 
-        Object result = methodInterceptor.intercept(mock, method, new Object[0], methodProxy);
-
-        verify(methodProxy, never()).invokeSuper(any(), any(Object[].class));
-        assertThat(result, nullValue());
+        methodInterceptor.intercept(mock, method, new Object[0], methodProxy);
     }
 
     private void mockMethodInvocationResultDto(String t1, String t) {
