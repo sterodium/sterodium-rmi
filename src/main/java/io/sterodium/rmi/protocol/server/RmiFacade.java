@@ -35,8 +35,7 @@ public class RmiFacade {
             result = invocationResult.getResult();
             returnType = invocationResult.getResultClass();
         } catch (RuntimeException e) {
-            e.printStackTrace();
-            result = "Invocation Exception: " + e;
+            throw new RemoteMethodInvocationException(e.getMessage(), e);
         }
 
         // serializing invocation result
