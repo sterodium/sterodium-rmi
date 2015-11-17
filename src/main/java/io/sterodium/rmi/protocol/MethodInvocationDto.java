@@ -6,11 +6,12 @@ package io.sterodium.rmi.protocol;
  */
 public class MethodInvocationDto {
 
+    // protocol version
+    private String jsonrpc;
     private final String method;
-
     private final String[] arguments;
-
     private final String[] argumentClasses;
+    private String id;
 
     /**
      * Represents information required to invoke method on the object remotely
@@ -30,11 +31,26 @@ public class MethodInvocationDto {
     }
 
     public String[] getArgumentClasses() {
-        return argumentClasses;
+        return argumentClasses == null ? new String[]{} : argumentClasses;
     }
 
     public String[] getArguments() {
-        return arguments;
+        return arguments == null ? new String[]{} : arguments;
     }
 
+    public String getJsonrpc() {
+        return jsonrpc;
+    }
+
+    public void setJsonrpc(String jsonrpc) {
+        this.jsonrpc = jsonrpc;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 }
