@@ -7,9 +7,7 @@ import io.sterodium.rmi.protocol.MethodInvocationDto;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -26,7 +24,7 @@ class MethodInvoker {
         IMPLEMENTATIONS.put(CharSequence.class, String.class);
     }
 
-    private final Gson gson = new Gson();
+    private static final Gson GSON = new Gson();
 
     private ObjectLocator objectLocator;
 
@@ -52,7 +50,7 @@ class MethodInvoker {
             try {
                 argumentClasses[i] = ClassUtils.forName(argumentClassesNames[i]);
             } catch (ClassNotFoundException e) {
-                throw new RuntimeException("Class " + argumentClassesNames[i] + " not found");
+                throw new MethodParameterException(i + 1, argumentClassesNames[i]);
             }
         }
         return argumentClasses;
@@ -61,7 +59,11 @@ class MethodInvoker {
     protected Object[] toObjects(String[] argumentStrings, Class<?>[] parameterTypes) {
         Object[] arguments = new Object[argumentStrings.length];
         for (int i = 0; i < arguments.length; i++) {
-            arguments[i] = toObject(argumentStrings[i], parameterTypes[i]);
+            try {
+                arguments[i] = toObject(argumentStrings[i], parameterTypes[i]);
+            } catch (Exception e) {
+                throw new MethodParameterException(i + 1, parameterTypes[i], argumentStrings[i]);
+            }
         }
         return arguments;
     }
@@ -90,7 +92,7 @@ class MethodInvoker {
             }
             try {
                 Class<?> arrayType = Class.forName("[L" + componentType.getName() + ";");
-                return gson.fromJson(value, arrayType);
+                return GSON.fromJson(value, arrayType);
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException(String.format("Could not find class for array of '%s'", componentType.getName()));
             }
@@ -104,15 +106,23 @@ class MethodInvoker {
     }
 
     protected Method getMethod(Object target, String methodName, Class<?>[] parameterTypes) {
+        Class<?> targetClass = target.getClass().equals(Class.class) ? (Class<?>) target : target.getClass();
         try {
-            Class<?> targetClass = target.getClass().equals(Class.class) ? (Class<?>) target : target.getClass();
             return targetClass.getMethod(methodName, parameterTypes);
         } catch (NoSuchMethodException e) {
-            throw new RuntimeException(String.format("Method %s.%s not found (argument types: %s)",
-                    target.getClass().getName(), methodName, Arrays.toString(parameterTypes)));
+            // trying to find declared method in class and all its superclasses (so we have more specific message)
+            Class<?> classToScan = targetClass;
+            while (classToScan != null) {
+                try {
+                    classToScan.getDeclaredMethod(methodName, parameterTypes);
+                    throw new MethodNotVisibleException(classToScan, methodName, parameterTypes);
+                } catch (NoSuchMethodException ignored) {
+                    classToScan = classToScan.getSuperclass();
+                }
+            }
+            throw new MethodNotFoundException(targetClass, methodName, parameterTypes);
         } catch (SecurityException e) {
-            throw new RuntimeException(String.format("Security Exception during method %s.%s call",
-                    target.getClass().getName(), methodName));
+            throw new RuntimeException(String.format("Security Exception during method %s.%s call", targetClass.getName(), methodName));
         }
     }
 
@@ -128,10 +138,7 @@ class MethodInvoker {
         } catch (IllegalArgumentException e) {
             throw new RuntimeException(String.format("Method %s.%s call is illegal", target.getClass().getName(), method.getName()));
         } catch (InvocationTargetException e) {
-            String errorMessage = String.format("Method %s.%s threw exception: %s",
-                    target.getClass().getName(), method.getName(), e.getCause());
-            LOGGER.log(Level.WARNING, errorMessage, e);
-            throw new RuntimeException(errorMessage, e);
+            throw new MethodInvocationException(target.getClass(), method.getName(), arguments, e.getCause());
         }
     }
 
