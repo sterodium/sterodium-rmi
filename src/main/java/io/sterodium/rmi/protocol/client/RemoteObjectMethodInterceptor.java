@@ -1,13 +1,24 @@
 package io.sterodium.rmi.protocol.client;
 
-import io.sterodium.rmi.protocol.MethodInvocationResultDto;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Primitives;
+import io.sterodium.rmi.protocol.MethodInvocationResultDto;
+import io.sterodium.rmi.protocol.server.MethodInvocationException;
+import io.sterodium.rmi.protocol.server.MethodNotFoundException;
+import io.sterodium.rmi.protocol.server.MethodParameterException;
+import io.sterodium.rmi.protocol.server.RmiException;
+import io.sterodium.rmi.protocol.server.RmiProtocol;
+import io.sterodium.rmi.protocol.server.TargetObjectNotFoundException;
+import io.sterodium.rmi.protocol.server.UnsupportedProtocolException;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
+
+import static io.sterodium.rmi.protocol.json.PrimitiveTypes.*;
+import static java.lang.String.format;
 
 /**
  * @author Mihails Volkovs mihails.volkovs@gmail.com
@@ -43,7 +54,7 @@ class RemoteObjectMethodInterceptor implements MethodInterceptor {
     /**
      * Invokes method remotely. Processes remote method invocation result
      * and constructs object for corresponding type.
-     * <p/>
+     * <p>
      * {@link MethodInvocationResultDto#getValue} is null return null;
      * {@link Method#getReturnType} is {@value Void} return null;
      * {@link Method#getReturnType} is primitive or wrapper - return primitive object of response value;
@@ -56,8 +67,7 @@ class RemoteObjectMethodInterceptor implements MethodInterceptor {
     Object invoke(Method method, Object[] arguments) {
         try {
             MethodInvocationResultDto methodResponse = invoker.invoke(widgetId, method, arguments);
-            LOGGER.info("Response: " + methodResponse.toString());
-
+            checkErrorCodes(methodResponse);
             String responseValue = methodResponse.getValue();
             return responseValue == null ? null : convertToType(responseValue, method.getReturnType(), methodResponse.getType());
         } catch (ClassNotFoundException e) {
@@ -66,26 +76,48 @@ class RemoteObjectMethodInterceptor implements MethodInterceptor {
         return null;
     }
 
+    @VisibleForTesting
+    protected void checkErrorCodes(MethodInvocationResultDto response) {
+        MethodInvocationResultDto.Error error = response.getError();
+        if (error == null) {
+            return;
+        }
+        final int code = error.getCode();
+        String message = error.getMessage();
+        String details = error.getData();
+        switch (code) {
+            case RmiProtocol.ERROR_CODE_INVALID_JSON:
+                throw new UnsupportedProtocolException(code, message, details);
+            case RmiProtocol.ERROR_CODE_INVALID_REQUEST:
+                throw new UnsupportedProtocolException(code, message, details);
+            case RmiProtocol.ERROR_CODE_METHOD_NOT_FOUND:
+                throw new MethodNotFoundException(code, message, details);
+            case RmiProtocol.ERROR_CODE_INVALID_PARAMS:
+                throw new MethodParameterException(code, message, details);
+            case RmiProtocol.ERROR_CODE_JSONRPC_ERROR:
+                throw new UnsupportedProtocolException(code, message, details);
+            case RmiProtocol.ERROR_CODE_SERVER_ERROR:
+                throw new MethodInvocationException(code, message, details);
+            case RmiProtocol.ERROR_CODE_OBJECT_NOT_FOUND:
+                throw new TargetObjectNotFoundException(code, message, details);
+            default:
+                LOGGER.warn("Unsupported error code '{}': '{}' ({}))", code, message, details);
+                throw new RmiException(code, message, details);
+        }
+    }
+
     private Object convertToType(String response, Class<?> type, String responseType) throws ClassNotFoundException {
-        LOGGER.info(String.format("Converting response '%s' to type %s or %s", response, type, responseType));
+        LOGGER.info(format("Converting response '%s' to type %s or %s", response, type, responseType));
         if (isVoid(type)) {
             return null;
-        }
-        if (String.class.equals(type)) {
+        } else if (String.class.equals(type)) {
             return response;
-        }
-        if (isNotVoidPrimitive(type)) {
+        } else if (isCharacter(type)) {
+            return response.toCharArray()[0];
+        } else if (isPrimitive(type)) {
             return parseString(response, type);
         }
         return proxyFactory.create(Class.forName(responseType), response);
-    }
-
-    boolean isVoid(Class<?> returnType) {
-        return void.class.equals(returnType) || Void.class.equals(returnType);
-    }
-
-    boolean isNotVoidPrimitive(Class<?> type) {
-        return !isVoid(type) && (type.isPrimitive() || Primitives.isWrapperType(type));
     }
 
     Object parseString(String value, Class<?> type) {

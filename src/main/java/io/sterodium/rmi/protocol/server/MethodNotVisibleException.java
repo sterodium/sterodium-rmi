@@ -10,7 +10,7 @@ import static java.lang.String.format;
  * @author Mihails Volkovs mihails.volkovs@gmail.com
  *         Date: 17.11.2015
  */
-public class MethodNotVisibleException extends RuntimeException {
+public class MethodNotVisibleException extends RmiException {
 
     private static final String MESSAGE_TEMPLATE = "Method %s.%s not visible (parameter types: %s)";
 

@@ -11,7 +11,7 @@ import static java.lang.String.format;
  * @author Mihails Volkovs mihails.volkovs@gmail.com
  *         Date: 17.11.2015
  */
-public class MethodNotFoundException extends RuntimeException {
+public class MethodNotFoundException extends RmiException {
 
     private static final String MESSAGE_TEMPLATE = "Method %s.%s not found (parameter types: %s)";
 
@@ -19,4 +19,7 @@ public class MethodNotFoundException extends RuntimeException {
         super(format(MESSAGE_TEMPLATE, methodClass.getName(), methodName, Arrays.toString(parameterTypes)));
     }
 
+    public MethodNotFoundException(int errorCode, String errorMessage, String errorDetails) {
+        super(errorCode, errorMessage, errorDetails);
+    }
 }
