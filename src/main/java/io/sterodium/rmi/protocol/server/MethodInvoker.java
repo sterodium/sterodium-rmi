@@ -3,12 +3,15 @@ package io.sterodium.rmi.protocol.server;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import io.sterodium.rmi.protocol.MethodInvocationDto;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Map;
-import java.util.logging.Logger;
+
+import static io.sterodium.rmi.protocol.json.PrimitiveTypes.isCharacter;
 
 /**
  * @author Mihails Volkovs mihails.volkovs@gmail.com
@@ -16,7 +19,7 @@ import java.util.logging.Logger;
  */
 class MethodInvoker {
 
-    private static final Logger LOGGER = Logger.getLogger(MethodInvoker.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(MethodInvoker.class);
 
     private static final Map<Class<?>, Class<?>> IMPLEMENTATIONS = Maps.newHashMap();
 
@@ -34,7 +37,6 @@ class MethodInvoker {
 
     public InvocationResult invoke(Object target, MethodInvocationDto invocation) {
         String methodName = invocation.getMethod();
-        LOGGER.info("*** Calling " + methodName + " on " + target.getClass().getName());
         Class<?>[] parameterTypes = toClasses(invocation.getArgumentClasses());
         Object[] arguments = toObjects(invocation.getArguments(), parameterTypes);
         Method method = getMethod(target, methodName, parameterTypes);
@@ -69,15 +71,26 @@ class MethodInvoker {
     }
 
     private Object toObject(String value, Class<?> targetClass) {
-        // TODO: MVO: add support for complex attributes
-        if (String.class.equals(targetClass)) {
+        if ("null".equals(value)) {
+            return null;
+        } else if (String.class.equals(targetClass)) {
             return value;
+        } else if (boolean.class.equals(targetClass) || Boolean.class.equals(targetClass)) {
+            return Boolean.valueOf(value);
+        } else if (byte.class.equals(targetClass) || Byte.class.equals(targetClass)) {
+            return Byte.valueOf(value);
+        } else if (isCharacter(targetClass)) {
+            return GSON.fromJson(value, Character.class);
+        } else if (short.class.equals(targetClass) || Short.class.equals(targetClass)) {
+            return Short.valueOf(value);
         } else if (int.class.equals(targetClass) || Integer.class.equals(targetClass)) {
             return Integer.valueOf(value);
         } else if (long.class.equals(targetClass) || Long.class.equals(targetClass)) {
             return Long.valueOf(value);
-        } else if (char.class.equals(targetClass) || Character.class.equals(targetClass)) {
-            return value.toCharArray()[0];
+        } else if (float.class.equals(targetClass) || Float.class.equals(targetClass)) {
+            return Float.valueOf(value);
+        } else if (double.class.equals(targetClass) || Double.class.equals(targetClass)) {
+            return Double.valueOf(value);
         } else if (Class.class.equals(targetClass)) {
             try {
                 return Class.forName(value);

@@ -13,6 +13,11 @@ public class RemoteNavigator {
         this.proxyFactory = new RemoteObjectProxyFactory(new RemoteInvoker(restClient));
     }
 
+    public RemoteNavigator(String objectId, Object object) {
+        RestClient restClient = new RestClient(new JvmTransport(objectId, object));
+        this.proxyFactory = new RemoteObjectProxyFactory(new RemoteInvoker(restClient));
+    }
+
     public <T> T createProxy(Class<T> clazz, String objectId) {
         return proxyFactory.create(clazz, objectId);
     }

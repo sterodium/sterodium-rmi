@@ -12,7 +12,7 @@ import static org.junit.Assert.fail;
  * @author Mihails Volkovs mihails.volkovs@gmail.com
  *         Date: 16.11.2015
  */
-public class RmiProtocolIntegrationTest {
+public class ServerIntegrationTest {
 
     private RmiFacade rmi;
 
@@ -99,7 +99,7 @@ public class RmiProtocolIntegrationTest {
         assertJson("{jsonrpc: 0.1.rmi, error: {" +
                 "code: -32602," +
                 "message: Invalid params," +
-                "data: Method parameter #1: value '1L' couldn't be mapped to type long}," +
+                "data: Method parameter #1: value 1L could not be mapped to type long}," +
                 "id: 1" +
                 "}", result);
     }
@@ -151,7 +151,7 @@ public class RmiProtocolIntegrationTest {
     }
 
     private String trim(String json) {
-        return json.replaceAll("\"", "").replaceAll("\\s", "").replaceAll("\\\\u0027", "'");
+        return json.replaceAll("\\\\\"", "").replaceAll("\"", "").replaceAll("\\s", "").replaceAll("\\\\u0027", "'");
     }
 
 }
