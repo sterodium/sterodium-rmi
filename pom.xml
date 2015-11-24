@@ -4,7 +4,7 @@
 
     <groupId>io.sterodium</groupId>
     <artifactId>sterodium-rmi</artifactId>
-    <version>0.3</version>
+    <version>0.4-SNAPSHOT</version>
     <inceptionYear>2015</inceptionYear>
 
     <packaging>jar</packaging>
@@ -62,7 +62,7 @@
         <url>git@github.com:sterodium/sterodium-rmi.git</url>
         <connection>scm:git@github.com:sterodium/sterodium-rmi.git</connection>
         <developerConnection>scm:git:git@github.com:sterodium/sterodium-rmi.git</developerConnection>
-        <tag>v0.3</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <distributionManagement>
