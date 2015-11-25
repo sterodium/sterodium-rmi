@@ -1,6 +1,7 @@
 package io.sterodium.rmi.protocol.server;
 
 
+import com.google.gson.Gson;
 import io.sterodium.rmi.protocol.MethodInvocationResultDto;
 
 import java.util.HashSet;
@@ -12,20 +13,20 @@ import java.util.Set;
  */
 class Marshaller {
 
+    private static Gson GSON = new Gson();
+
     private static final Set<Class<?>> SIMPLE_OBJECT_CLASSES = new HashSet<>();
 
     static {
         SIMPLE_OBJECT_CLASSES.add(Boolean.class);
-
         SIMPLE_OBJECT_CLASSES.add(Byte.class);
         SIMPLE_OBJECT_CLASSES.add(Short.class);
         SIMPLE_OBJECT_CLASSES.add(Integer.class);
-
         SIMPLE_OBJECT_CLASSES.add(Long.class);
         SIMPLE_OBJECT_CLASSES.add(Float.class);
         SIMPLE_OBJECT_CLASSES.add(Double.class);
-
         SIMPLE_OBJECT_CLASSES.add(Character.class);
+
         SIMPLE_OBJECT_CLASSES.add(String.class);
     }
 
@@ -44,6 +45,9 @@ class Marshaller {
         Class<?> resultClass = newObject.getClass();
         if (SIMPLE_OBJECT_CLASSES.contains(resultClass)) {
             return new MethodInvocationResultDto(newObject.toString(), newObject.getClass().getName());
+        }
+        if (resultClass.isArray()) {
+            return new MethodInvocationResultDto(GSON.toJson(newObject), newObject.getClass().getName());
         }
 
         String newWidgetId = objectLocator.put(newObject);

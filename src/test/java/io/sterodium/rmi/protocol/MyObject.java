@@ -91,4 +91,77 @@ public class MyObject {
         return arg;
     }
 
+
+
+
+
+    public boolean[] getBooleanArray(boolean[] arg) {
+        return arg;
+    }
+
+    public byte[] getByteArray(byte[] arg) {
+        return arg;
+    }
+
+    public char[] getCharArray(char[] arg) {
+        return arg;
+    }
+
+    public short[] getShortArray(short[] arg) {
+        return arg;
+    }
+
+    public int[] getIntArray(int[] arg) {
+        return arg;
+    }
+
+    public long[] getLongArray(long[] arg) {
+        return arg;
+    }
+
+    public float[] getFloatArray(float[] arg) {
+        return arg;
+    }
+
+    public double[] getDoubleArray(double[] arg) {
+        return arg;
+    }
+
+
+    public Boolean[] getBigBooleanArray(Boolean[] arg) {
+        return arg;
+    }
+
+    public Byte[] getBigByteArray(Byte[] arg) {
+        return arg;
+    }
+
+    public Character[] getBigCharacterArray(Character[] arg) {
+        return arg;
+    }
+
+    public Short[] getBigShortArray(Short[] arg) {
+        return arg;
+    }
+
+    public Integer[] getBigIntegerArray(Integer[] arg) {
+        return arg;
+    }
+
+    public Long[] getBigLongArray(Long[] arg) {
+        return arg;
+    }
+
+    public Float[] getBigFloatArray(Float[] arg) {
+        return arg;
+    }
+
+    public Double[] getBigDoubleArray(Double[] arg) {
+        return arg;
+    }
+
+    public String[] getStringArray(String[] arg) {
+        return arg;
+    }
+
 }

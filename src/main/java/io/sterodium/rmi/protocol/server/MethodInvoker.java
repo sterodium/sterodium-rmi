@@ -3,6 +3,7 @@ package io.sterodium.rmi.protocol.server;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import io.sterodium.rmi.protocol.MethodInvocationDto;
+import io.sterodium.rmi.protocol.json.PrimitiveTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,7 +100,9 @@ class MethodInvoker {
             }
         } else if (targetClass.isArray()) {
             Class<?> componentType = targetClass.getComponentType();
-            if (componentType.isInterface()) {
+            if (PrimitiveTypes.isPrimitive(componentType)) {
+                return GSON.fromJson(value, targetClass);
+            } else if (componentType.isInterface()) {
                 // searching for proper implementation
                 componentType = IMPLEMENTATIONS.get(componentType);
             }

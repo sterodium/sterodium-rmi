@@ -2,6 +2,7 @@ package io.sterodium.rmi.protocol.client;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Primitives;
+import com.google.gson.Gson;
 import io.sterodium.rmi.protocol.MethodInvocationResultDto;
 import io.sterodium.rmi.protocol.server.MethodInvocationException;
 import io.sterodium.rmi.protocol.server.MethodNotFoundException;
@@ -16,8 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
-import static io.sterodium.rmi.protocol.json.PrimitiveTypes.*;
 import static java.lang.String.format;
 
 /**
@@ -33,6 +34,8 @@ class RemoteObjectMethodInterceptor implements MethodInterceptor {
     private RemoteInvoker invoker;
 
     private String widgetId;
+
+    private static final Gson GSON = new Gson();
 
     public RemoteObjectMethodInterceptor(RemoteObjectProxyFactory proxyFactory, RemoteInvoker invoker, String widgetId) {
         this.proxyFactory = proxyFactory;
@@ -108,15 +111,13 @@ class RemoteObjectMethodInterceptor implements MethodInterceptor {
 
     private Object convertToType(String response, Class<?> type, String responseType) throws ClassNotFoundException {
         LOGGER.info(format("Converting response '%s' to type %s or %s", response, type, responseType));
-        if (isVoid(type)) {
-            return null;
-        } else if (String.class.equals(type)) {
+
+        if (String.class.equals(type)) {
             return response;
-        } else if (isCharacter(type)) {
-            return response.toCharArray()[0];
-        } else if (isPrimitive(type)) {
-            return parseString(response, type);
+        } else if (Modifier.isFinal(type.getModifiers())) {
+            return GSON.fromJson(response, type);
         }
+
         return proxyFactory.create(Class.forName(responseType), response);
     }
 
